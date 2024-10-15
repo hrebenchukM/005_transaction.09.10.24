@@ -106,12 +106,15 @@ register.post('/',  par,function (req, res) {
 
 
 
-login.post('/',  par,function (req, res) {
+login.post('/', par,function (req, res) {
+	
 	
 	console.log(req.body);
 
-	let Login = req.body.Login;
-	let Password = req.body.Password;
+    let Login = req.body.Login;
+    let Password = req.body.Password;
+
+
 
 
 	connection.connect(function (err) {
@@ -126,7 +129,11 @@ login.post('/',  par,function (req, res) {
 			request.input('Password', mssql.NVarChar(50), Password);
 
 
-			request.query("SELECT * FROM Admins WHERE Login = @Login AND Password = @Password", function (err, data) {
+			request.query(`
+                SELECT * 
+                FROM Admins 
+                WHERE Login = @Login AND Password = @Password
+            `, function (err, data) {
 
 				if (err) {
 					console.log(err);
@@ -136,18 +143,45 @@ login.post('/',  par,function (req, res) {
 					});
 				} 
 				else {
-					transaction.commit(function (err, data) {
+					transaction.commit(function (err) {
 							console.log('data commit success');
-							res.send('transaction successful');
-					});
-				};
-			});
 
-		});
-	});
+
+							var allItems = data.recordset;
+							console.log(' result:', allItems);
+			
+			
+			
+							if (allItems.length > 0) {
+						  var html = `
+                                <table border="1">
+                                    <tr>
+                                        <th>Id</th>
+                                        <th>Login</th>
+                                        <th>Password</th>
+                                    </tr>
+                            `;
+						
+							for (let i = 0; i < allItems.length; i++) {
+								html += `
+								<tr>
+									<td>${allItems[i].Id}</td>
+									<td>${allItems[i].Login}</td>
+									<td>${allItems[i].Password}</td>
+								</tr>
+							`;
+							} 
+							 html += '</table>';
+							res.send(html);
+						}else {
+							res.sendFile(path.join(__dirname, catalog, 'index.html'));
+						}
+                    });
+                }
+            });
+        });
+    });
 });
-
-
 
 
 
