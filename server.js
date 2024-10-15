@@ -124,8 +124,6 @@ register.post('/',  par,function (req, res) {
 });
 
 
-
-
 login.post('/', par,function (req, res) {
 	
 	
@@ -169,7 +167,6 @@ login.post('/', par,function (req, res) {
 
 							var allItems = data.recordset;
 							console.log(' result:', allItems);
-			
 			
 			
 							if (allItems.length > 0) {
