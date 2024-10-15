@@ -112,7 +112,7 @@ login.post('/',  par,function (req, res) {
 
 	let Login = req.body.Login;
 	let Password = req.body.Password;
-ф
+
 
 	connection.connect(function (err) {
 		// транзакция - безопасная операция над бд с возможностью отката изменений в случае ошибки при выполнении запроса  
@@ -134,28 +134,16 @@ login.post('/',  par,function (req, res) {
 						console.log('rollback successful');
 						res.send('transaction rollback successful');
 					});
-					return;
 				} 
-				
-			});
-
-			let isAdmin = false;
-            request.on('row', function () {
-                isAdmin = true; 
-            });
-
-
-			request.on('done', function () {
-				if (isAdmin) {
-					
-					res.send('Welcome Admin!');
-				} else {
-					res.send('No such admin');
-				}
+				else {
+					transaction.commit(function (err, data) {
+							console.log('data commit success');
+							res.send('transaction successful');
+					});
+				};
 			});
 
 		});
-
 	});
 });
 
