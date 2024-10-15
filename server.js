@@ -73,11 +73,34 @@ register.post('/',  par,function (req, res) {
 
 		transaction.begin(function (err) {
 			var request = new mssql.Request(transaction);
-			request.input('Name', mssql.NVarChar(50), Name);
 			request.input('Login', mssql.NVarChar(50), Login);
+		
+
+
+
+			
+			request.query("SELECT Login FROM Users WHERE Login = @Login", function (err, result) {
+				if (err) {
+					console.log(err);
+					transaction.rollback(function (err) {
+						console.log('rollback successful');
+						res.send('transaction rollback successful');
+					});
+				} 
+
+                if (result.recordset.length > 0) {
+                    transaction.rollback(function () {
+                        console.log('rollback successful');
+						res.send('login exists,transaction rollback successful');
+                    });
+                }
+				 else
+			    {
+
+
+
 			request.input('Password', mssql.NVarChar(50), Password);
-
-
+			request.input('Name', mssql.NVarChar(50), Name);
 			request.query("INSERT INTO Users (Name, Login, Password) VALUES (@Name, @Login, @Password)", function (err, data) {
 
 				if (err) {
@@ -91,17 +114,14 @@ register.post('/',  par,function (req, res) {
 					transaction.commit(function (err, data) {
 							console.log('data commit success');
 							res.send('transaction successful');
-					});
-				};
-			});
-
-
-			
+						});
+					}
+				});
+			}
 		});
 	});
 });
-
-
+});
 
 
 
