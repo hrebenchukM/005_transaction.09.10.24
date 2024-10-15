@@ -1,4 +1,6 @@
 var express  = require('express'); 
+var bodyparser = require('body-parser');
+
 var app = express(); 
 var port = 8080; 
 var mssql = require('mssql'); 
@@ -6,7 +8,6 @@ var mssql = require('mssql');
 
 var path = require('path');
 var catalog = 'data';
-var bodyparser = require('body-parser');
 
 
 
@@ -55,18 +56,110 @@ login.get('/', function (req, res) {
 
 
 
+register.post('/',  par,function (req, res) {
+	
+	console.log(req.body);
 
-register.post('/', par, function (req, res) {
-   
+	let Login = req.body.Login;
+	let Password = req.body.Password;
+	let Name = req.body.Name;
+
+
+	connection.connect(function (err) {
+		// транзакция - безопасная операция над бд с возможностью отката изменений в случае ошибки при выполнении запроса  
+		var transaction = new mssql.Transaction(connection);
+
+
+
+		transaction.begin(function (err) {
+			var request = new mssql.Request(transaction);
+			request.input('Name', mssql.NVarChar(50), Name);
+			request.input('Login', mssql.NVarChar(50), Login);
+			request.input('Password', mssql.NVarChar(50), Password);
+
+
+			request.query("INSERT INTO Users (Name, Login, Password) VALUES (@Name, @Login, @Password)", function (err, data) {
+
+				if (err) {
+					console.log(err);
+					transaction.rollback(function (err) {
+						console.log('rollback successful');
+						res.send('transaction rollback successful');
+					});
+				} 
+				else {
+					transaction.commit(function (err, data) {
+							console.log('data commit success');
+							res.send('transaction successful');
+					});
+				};
+			});
+
+
+			
+		});
+	});
 });
 
 
 
 
 
-login.post('/',par, function(req, res){
+
+login.post('/',  par,function (req, res) {
 	
+	console.log(req.body);
+
+	let Login = req.body.Login;
+	let Password = req.body.Password;
+ф
+
+	connection.connect(function (err) {
+		// транзакция - безопасная операция над бд с возможностью отката изменений в случае ошибки при выполнении запроса  
+		var transaction = new mssql.Transaction(connection);
+
+
+
+		transaction.begin(function (err) {
+			var request = new mssql.Request(transaction);
+			request.input('Login', mssql.NVarChar(50), Login);
+			request.input('Password', mssql.NVarChar(50), Password);
+
+
+			request.query("SELECT * FROM Admins WHERE Login = @Login AND Password = @Password", function (err, data) {
+
+				if (err) {
+					console.log(err);
+					transaction.rollback(function (err) {
+						console.log('rollback successful');
+						res.send('transaction rollback successful');
+					});
+					return;
+				} 
+				
+			});
+
+			let isAdmin = false;
+            request.on('row', function () {
+                isAdmin = true; 
+            });
+
+
+			request.on('done', function () {
+				if (isAdmin) {
+					
+					res.send('Welcome Admin!');
+				} else {
+					res.send('No such admin');
+				}
+			});
+
+		});
+
 	});
+});
+
+
 
 
 
@@ -77,7 +170,8 @@ register.on('mount', function() {
 }); 
 login.on('mount', function() {
 	console.log('admin mounted'); 
-});
+}); 
+
 
 // связывание главного приложения со вложенным 
 app.use('/login', login); 
